@@ -1,0 +1,42 @@
+
+name: clasp_push
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  clasp_push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install dependencies
+      run: |
+        npm install -g @google/clasp
+
+    - name: Authorize Clasp
+      env:
+        CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
+      run: |
+        echo $CLASP_TOKEN > ~/.clasprc.json
+    
+    # Get the repository directories and run `clasp push -f` one by one
+    - name: Clasp push by directories
+      run: |
+        for dir in $(ls -d */); do
+          cd $dir
+          if clasp status; then
+            clasp push -f
+          fi
+          cd ..
+        done
